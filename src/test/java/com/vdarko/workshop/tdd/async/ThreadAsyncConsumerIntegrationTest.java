@@ -2,9 +2,9 @@ package com.vdarko.workshop.tdd.async;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import com.vdarko.workshop.tdd.async.thread.ThreadAsyncConsumer;
 import com.vdarko.workshop.tdd.async.thread.ThreadAsyncProducer;
 
-public class AsyncConsumerIntegrationTest extends Thread {
+public class ThreadAsyncConsumerIntegrationTest extends Thread {
 
   /**
    * <b>GIVEN</b> async producer</br>
@@ -36,7 +36,7 @@ public class AsyncConsumerIntegrationTest extends Thread {
 
     // WHEN
     BlockingQueue<String> inputQueue = new LinkedBlockingDeque<>();
-    Queue<String> outputQueue = new LinkedList<>();
+    Queue<String> outputQueue = new ConcurrentLinkedQueue<>();
 
     producer.startProducing(inputQueue);
     consumer.startConsuming(inputQueue, outputQueue);
