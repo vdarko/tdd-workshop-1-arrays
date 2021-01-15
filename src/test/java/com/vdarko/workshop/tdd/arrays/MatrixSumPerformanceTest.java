@@ -1,13 +1,18 @@
 package com.vdarko.workshop.tdd.arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.Mockito.doThrow;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
 
 public class MatrixSumPerformanceTest {
 
@@ -50,6 +55,46 @@ public class MatrixSumPerformanceTest {
 
     // THEN
     assertThat(sum).isEqualTo(expectedSum);
+  }
+
+  /**
+   * <b>GIVEN</b> matrix with 5x5 elements</br>
+   * <b>WHEN</b> array sum fails on 3rd row</br>
+   * <b>THEN</b> exception is propagated from CompletableFuture (background
+   * thread)</br>
+   */
+  @Test
+  public void testExceptionFromCompletableFuturePropagation() throws Exception {
+
+    Integer[] invalidArray = { 0, 1, 2, 3, 4 };
+
+    // GIVEN
+    Integer[][] numbers = { //
+        { 1, 2, 3, 4, 5 }, //
+        { 1, 2, 3, 4, 5 }, //
+        invalidArray, //
+        { 1, 2, 3, 4, 5 }, //
+        { 1, 2, 3, 4, 5 } };
+
+    // WHEN
+    MatrixSum matrixSum;
+    try (MockedConstruction<ArraySum> mockConstruction = Mockito.mockConstruction(ArraySum.class)) {
+      matrixSum = new MatrixSum();
+
+      ArraySum spiedArraySum = mockConstruction.constructed().get(0);
+      doThrow(new IllegalArgumentException("Invalid array is not valid"))//
+      .when(spiedArraySum).sum(invalidArray);
+    }
+
+    Throwable thrown = catchThrowable(() -> {//
+      matrixSum.parallelSum(numbers);
+    });
+
+    // THEN
+    assertThat(thrown).isNotNull()//
+    .isInstanceOf(CompletionException.class)//
+    .hasRootCauseInstanceOf(IllegalArgumentException.class)//
+    .hasRootCauseMessage("Invalid array is not valid");
   }
 
   private static void generateHugeMatrix(int x, int y, int number) {
